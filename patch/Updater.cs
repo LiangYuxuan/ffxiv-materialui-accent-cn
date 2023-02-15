@@ -150,7 +150,9 @@ namespace MaterialUI {
 
 	public class Updater {
 		public const string repoMaster = "skotlex/ffxiv-material-ui";
+        public const string repoMasterSHA = "$MASTERCOMMIT$";
 		public const string repoAccent = "sevii77/ffxiv_materialui_accent";
+        public const string repoAccentSHA = "$ACCENTCOMMIT$";
 
 		private HttpClient httpClient;
 		private MaterialUI main;
@@ -168,8 +170,6 @@ namespace MaterialUI {
 			mods = new Dictionary<string, Mod>();
 
 			var handler = new HttpClientHandler();
-			handler.Proxy = null;
-			handler.UseProxy = false;
 
 			httpClient = new HttpClient(handler);
 			httpClient.DefaultRequestHeaders.Add("User-Agent", "FFXIV-MaterialUI-Accent");
@@ -189,7 +189,7 @@ namespace MaterialUI {
 			return File.ReadAllBytes(path);
 		}
 
-		private Dir PopulateDir(Repo repo, string repoName) {
+		private Dir PopulateDir(Repo repo, string repoName, string repoSHA = "master") {
 			Dir dir = new Dir("", repo.sha);
 
 			foreach(RepoFile file in repo.tree) {
@@ -206,7 +206,7 @@ namespace MaterialUI {
 					for(int i = 0; i < path.Length - 1; i++)
 						curdir = curdir.dirs[path[i]];
 
-					curdir.files[path[path.Length - 1]] = (file.sha, String.Format("https://raw.githubusercontent.com/{0}/master/{1}", repoName, file.path));
+					curdir.files[path[path.Length - 1]] = (file.sha, String.Format("https://raw.githubusercontent.com/{0}/{1}/{2}", repoName, repoSHA, file.path));
 				}
 			}
 
@@ -331,7 +331,7 @@ namespace MaterialUI {
 
 		public async Task LoadOptions() {
 			// Task.Run(async() => {
-				string resp = Regex.Replace(await httpClient.GetStringAsync(String.Format("https://raw.githubusercontent.com/{0}/master/options.json", repoAccent)), "//[^\n]*", "");
+				string resp = Regex.Replace(await httpClient.GetStringAsync(String.Format("https://raw.githubusercontent.com/{0}/{1}/options.json", repoAccent, repoAccentSHA)), "//[^\n]*", "");
 				Options options = JsonConvert.DeserializeObject<Options>(resp);
 				mods["base"] = new Mod(
 					"base",
@@ -438,14 +438,14 @@ namespace MaterialUI {
 					return;
 
 				main.ui.ShowNotice("Loading " + repoMaster);
-				string resp = await httpClient.GetStringAsync(String.Format("https://api.github.com/repos/{0}/git/trees/master?recursive=1", repoMaster));
+				string resp = await httpClient.GetStringAsync(String.Format("https://api.github.com/repos/{0}/git/trees/{1}?recursive=1", repoMaster, repoMasterSHA));
 				Repo data = JsonConvert.DeserializeObject<Repo>(resp);
-				dirMaster = PopulateDir(data, repoMaster);
+				dirMaster = PopulateDir(data, repoMaster, repoMasterSHA);
 
 				main.ui.ShowNotice("Loading " + repoAccent);
-				resp = await httpClient.GetStringAsync(String.Format("https://api.github.com/repos/{0}/git/trees/master?recursive=1", repoAccent));
+				resp = await httpClient.GetStringAsync(String.Format("https://api.github.com/repos/{0}/git/trees/{1}?recursive=1", repoAccent, repoAccentSHA));
 				data = JsonConvert.DeserializeObject<Repo>(resp);
-				dirAccent = PopulateDir(data, repoAccent);
+				dirAccent = PopulateDir(data, repoAccent, repoAccentSHA);
 
 				await LoadMods();
 				List<string> changes = await UpdateCache();
