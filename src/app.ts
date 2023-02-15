@@ -110,10 +110,12 @@ const mainHandler = async () => {
         const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj']);
         if (res.error) {
             console.error('.NET Build failed with status code %d', res.status);
-            console.error(res.stdout);
-            console.error(res.stderr);
+            console.error(res.stdout.toString('utf-8'));
+            console.error(res.stderr.toString('utf-8'));
             throw res.error;
         }
+
+        console.log(res.stdout.toString('utf-8'));
 
         await fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release.zip');
 
@@ -130,10 +132,12 @@ const mainHandler = async () => {
         const resGH = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj']);
         if (resGH.error) {
             console.error('.NET Build failed with status code %d', resGH.status);
-            console.error(resGH.stdout);
-            console.error(resGH.stderr);
+            console.error(resGH.stdout.toString('utf-8'));
+            console.error(resGH.stderr.toString('utf-8'));
             throw resGH.error;
         }
+
+        console.log(resGH.stdout.toString('utf-8'));
 
         // final copy
         fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release_gh.zip');
