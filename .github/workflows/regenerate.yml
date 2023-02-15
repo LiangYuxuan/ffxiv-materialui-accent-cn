@@ -1,0 +1,44 @@
+name: Regenerate
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: 0 1 * * *
+  push:
+    branches:
+      - master
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v2
+        with:
+          node-version: '16'
+
+      - run: npm install
+
+      - run: npm run lint
+
+      - run: npm run build
+
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7'
+
+      - run: node dist/app.js
+        id: fetch
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - uses: EndBug/add-and-commit@v9
+        if: ${{ steps.fetch.outputs.updated == 'true' }}
+        with:
+          author_name: GitHub Action
+          author_email: github-actions[bot]@users.noreply.github.com
+          message: Update Plugin to Version ${{ steps.fetch.outputs.version }} with Commit skotlex/ffxiv-material-ui@${{ steps.fetch.outputs.master }} & sevii77/ffxiv_materialui_accent@${{ steps.fetch.outputs.accent }}
