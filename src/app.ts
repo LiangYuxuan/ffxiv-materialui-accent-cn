@@ -6,6 +6,7 @@ import { spawnSync } from 'child_process';
 
 import got from 'got';
 import tar from 'tar';
+import _7z from '7zip-min';
 
 import apiLevel from './apiLevel.js';
 import getCommitDateBefore from './api.js';
@@ -33,29 +34,58 @@ const mainHandler = async () => {
     console.log('Commit on sevii77/ffxiv_materialui_accent: %s', accentCommit);
 
     if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accentCommit) {
-        // Step 1: Download accent and extract plugin
+        // Step 1: Download accent and dalamud resource and extract plugin
         console.log('Download sevii77/ffxiv_materialui_accent and extract');
 
         const tempDir = await fs.mkdtemp(path.resolve(os.tmpdir(), 'mui'));
-        const archiveFileName = 'accent.tar.gz';
-        const archive = got.stream(`https://api.github.com/repos/sevii77/ffxiv_materialui_accent/tarball/${accentCommit}`, {
-            headers: {
-                Authorization: process.env.GITHUB_TOKEN,
-            },
-        });
-        const archiveFile = await fs.open(path.resolve(tempDir, archiveFileName), 'a+');
-        await stream.pipeline(archive, archiveFile.createWriteStream());
-        await archiveFile.close();
+        const [manifest] = await Promise.all([
+            (async () => {
+                const archiveFileName = 'accent.tar.gz';
+                const archive = got.stream(`https://api.github.com/repos/sevii77/ffxiv_materialui_accent/tarball/${accentCommit}`, {
+                    headers: {
+                        Authorization: process.env.GITHUB_TOKEN,
+                    },
+                });
+                const archiveFile = await fs.open(path.resolve(tempDir, archiveFileName), 'a+');
+                await stream.pipeline(archive, archiveFile.createWriteStream());
+                await archiveFile.close();
 
-        await fs.rm('./plugin', { recursive: true, force: true });
-        await tar.extract({
-            file: path.resolve(tempDir, archiveFileName),
-            cwd: tempDir,
-            strip: 1,
-        });
-        await fs.cp(path.resolve(tempDir, 'plugin'), './plugin', { recursive: true });
-        const manifestText = await fs.readFile(path.resolve(tempDir, 'repo.json'));
-        const manifest = JSON.parse(manifestText.toString('utf-8')) as Manifest[];
+                await fs.rm('./plugin', { recursive: true, force: true });
+                await tar.extract({
+                    file: path.resolve(tempDir, archiveFileName),
+                    cwd: tempDir,
+                    strip: 1,
+                });
+                await Promise.all([
+                    fs.cp(path.resolve(tempDir, 'plugin'), './plugin', { recursive: true }),
+                    fs.cp(path.resolve(tempDir, 'plugin'), './plugin_gh', { recursive: true }),
+                ]);
+                const manifestText = await fs.readFile(path.resolve(tempDir, 'repo.json'));
+                return JSON.parse(manifestText.toString('utf-8')) as Manifest[];
+            })(),
+            (async () => {
+                const dalamudFileName = 'latest.7z';
+                const dalamud = got.stream('https://raw.githubusercontent.com/ottercorp/dalamud-distrib/main/latest.7z');
+                const dalamudFile = await fs.open(path.resolve(tempDir, dalamudFileName), 'a+');
+                await stream.pipeline(dalamud, dalamudFile.createWriteStream());
+                await dalamudFile.close();
+
+                try {
+                    await fs.stat('./data/XIVLauncher/addon/Hooks/dev');
+                } catch {
+                    await fs.mkdir('./data/XIVLauncher/addon/Hooks/dev', { recursive: true });
+                }
+
+                await new Promise<void>((resolve, reject) => {
+                    _7z.unpack(path.resolve(tempDir, dalamudFileName), './data/XIVLauncher/addon/Hooks/dev', (err) => {
+                        if (err) {
+                            return reject(err);
+                        }
+                        return resolve();
+                    });
+                });
+            })(),
+        ]);
 
         // final clean up
         fs.rm(tempDir, { recursive: true, force: true });
@@ -95,52 +125,60 @@ const mainHandler = async () => {
         // Step 3: Apply patch and build
         const patchText = await fs.readFile('./patch/Updater.cs');
 
-        // with proxy and cache
-        console.log('Patch plugin with proxy and build');
+        await Promise.all([
+            (async () => {
+                // plugin with ghproxy
+                await fs.writeFile(
+                    './plugin/Updater.cs',
+                    patchText.toString('utf-8')
+                        .replace('https://raw.githubusercontent.com/', 'https://ghproxy.com/https://raw.githubusercontent.com/')
+                        .replace('https://api.github.com/repos/{0}/git/trees/{1}?recursive=1', 'https://ghproxy.com/https://raw.githubusercontent.com/LiangYuxuan/ffxiv-materialui-accent-cn/tree/{0}/{1}')
+                        .replace('$MASTERCOMMIT$', masterCommit)
+                        .replace('$ACCENTCOMMIT$', accentCommit),
+                );
 
-        await fs.writeFile(
-            './plugin/Updater.cs',
-            patchText.toString('utf-8')
-                .replace('https://raw.githubusercontent.com/', 'https://ghproxy.com/https://raw.githubusercontent.com/')
-                .replace('https://api.github.com/repos/{0}/git/trees/{1}?recursive=1', 'https://ghproxy.com/https://raw.githubusercontent.com/LiangYuxuan/ffxiv-materialui-accent-cn/tree/{0}/{1}')
-                .replace('$MASTERCOMMIT$', masterCommit)
-                .replace('$ACCENTCOMMIT$', accentCommit),
-        );
+                const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj'], {
+                    env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
+                });
+                if (res.error || res.status !== 0) {
+                    console.error('.NET Build for plugin with ghproxy failed with status code %d', res.status);
+                    console.error(res.error);
+                    console.error(res.stdout.toString('utf-8'));
+                    console.error(res.stderr.toString('utf-8'));
 
-        const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj']);
-        if (res.error) {
-            console.error('.NET Build failed with status code %d', res.status);
-            console.error(res.stdout.toString('utf-8'));
-            console.error(res.stderr.toString('utf-8'));
-            throw res.error;
-        }
+                    throw new Error('.NET Build Failed');
+                }
 
-        console.log(res.stdout.toString('utf-8'));
+                console.log('.NET Build for plugin with ghproxy completed');
 
-        await fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release.zip');
+                fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release.zip');
+            })(),
+            (async () => {
+                // plugin without ghproxy
+                await fs.writeFile(
+                    './plugin_gh/Updater.cs',
+                    patchText.toString('utf-8')
+                        .replace('$MASTERCOMMIT$', masterCommit)
+                        .replace('$ACCENTCOMMIT$', accentCommit),
+                );
 
-        // only hash tag lock
-        console.log('Patch plugin without proxy and build');
+                const res = spawnSync('dotnet', ['build', './plugin_gh/MaterialUI.csproj'], {
+                    env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
+                });
+                if (res.error || res.status !== 0) {
+                    console.error('.NET Build for plugin without ghproxy failed with status code %d', res.status);
+                    console.error(res.error);
+                    console.error(res.stdout.toString('utf-8'));
+                    console.error(res.stderr.toString('utf-8'));
 
-        await fs.writeFile(
-            './plugin/Updater.cs',
-            patchText.toString('utf-8')
-                .replace('$MASTERCOMMIT$', masterCommit)
-                .replace('$ACCENTCOMMIT$', accentCommit),
-        );
+                    throw new Error('.NET Build Failed');
+                }
 
-        const resGH = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj']);
-        if (resGH.error) {
-            console.error('.NET Build failed with status code %d', resGH.status);
-            console.error(resGH.stdout.toString('utf-8'));
-            console.error(resGH.stderr.toString('utf-8'));
-            throw resGH.error;
-        }
+                console.log('.NET Build for plugin without ghproxy completed');
 
-        console.log(resGH.stdout.toString('utf-8'));
-
-        // final copy
-        fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release_gh.zip');
+                fs.cp('./plugin_gh/bin/Release/MaterialUI/latest.zip', './release_gh.zip');
+            })(),
+        ]);
 
         // Step 4: Release
         console.log('Generate manifest');
