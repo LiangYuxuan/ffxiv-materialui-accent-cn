@@ -6,13 +6,13 @@ Build Dalamud plugin Material UI for CN client.
 
 ### For CN client and network condition
 
-`https://raw.fastgit.org/LiangYuxuan/ffxiv-material-accent-cn/master/repo.json`
+`https://raw.fastgit.org/LiangYuxuan/ffxiv-materialui-accent-cn/master/repo.json`
 
-`https://ghproxy.com/https://raw.githubusercontent.com/LiangYuxuan/ffxiv-material-accent-cn/master/repo.json`
+`https://ghproxy.com/https://raw.githubusercontent.com/LiangYuxuan/ffxiv-materialui-accent-cn/master/repo.json`
 
 ### For CN client but uses GitHub urls
 
-`https://raw.githubusercontent.com/LiangYuxuan/ffxiv-material-accent-cn/master/repo_gh.json`
+`https://raw.githubusercontent.com/LiangYuxuan/ffxiv-materialui-accent-cn/master/repo_gh.json`
 
 ## Credit
 

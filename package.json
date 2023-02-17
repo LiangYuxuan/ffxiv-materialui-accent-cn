@@ -1,5 +1,5 @@
 {
-    "name": "ffxiv-material-accent-cn-fetcher",
+    "name": "ffxiv-materialui-accent-cn",
     "version": "1.0.0",
     "author": "Rhyster",
     "description": "Build dalamud plugin Material UI for CN client.",
