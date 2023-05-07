@@ -150,9 +150,9 @@ namespace MaterialUI {
 
 	public class Updater {
 		public const string repoMaster = "skotlex/ffxiv-material-ui";
-        public const string repoMasterSHA = "d247d667fbbd325f8ee224db628235f3d9a07fd5";
+        public const string repoMasterSHA = "8148af09ba6dd77986f64fc579ca284efbc7b065";
 		public const string repoAccent = "sevii77/ffxiv_materialui_accent";
-        public const string repoAccentSHA = "45e3c186eb8433aae0745799ba80eae7350e3a7a";
+        public const string repoAccentSHA = "d1184b7ebcced7bcbb0c9c900cde1fb1e1873ae0";
 
 		private HttpClient httpClient;
 		private MaterialUI main;
