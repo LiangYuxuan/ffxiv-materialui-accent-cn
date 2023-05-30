@@ -8,11 +8,11 @@ import got from 'got';
 import tar from 'tar';
 import _7z from '7zip-min';
 
-import apiLevel from './apiLevel';
-import getCommitDateBefore from './api';
+import apiLevel from './apiLevel.js';
+import getCommitDateBefore from './api.js';
 
-import type { BuildInfo } from './types/buildInfo';
-import { Manifest } from './types/manifest';
+import type { BuildInfo } from './types/buildInfo.js';
+import { Manifest } from './types/manifest.js';
 
 const mainHandler = async () => {
     const buildInfoFile = await fs.open('buildInfo.json', 'a+');

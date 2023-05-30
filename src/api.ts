@@ -1,6 +1,6 @@
 import got from 'got';
 
-import type { Commit } from './types/commits';
+import type { Commit } from './types/commits.js';
 
 const commitCache = new Map<string, string>();
 const getCommitDateBefore = async (

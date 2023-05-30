@@ -2,7 +2,7 @@ import assert from 'assert';
 
 import got from 'got';
 
-import type { Commit } from './types/commits';
+import type { Commit } from './types/commits.js';
 
 const parseAPILevel = async (repo: string, commit = 'master') => {
     const fileContent = (await got.get(`https://raw.githubusercontent.com/${repo}/${commit}/Dalamud/Plugin/Internal/PluginManager.cs`)).body;
