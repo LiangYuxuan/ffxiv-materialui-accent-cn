@@ -15,6 +15,7 @@ import type { BuildInfo } from './types/buildInfo.js';
 import { Manifest } from './types/manifest.js';
 
 const mainHandler = async () => {
+    const finals: Promise<unknown>[] = [];
     const buildInfoFile = await fs.open('buildInfo.json', 'a+');
 
     let buildInfo = {} as BuildInfo;
@@ -79,16 +80,17 @@ const mainHandler = async () => {
                 await new Promise<void>((resolve, reject) => {
                     _7z.unpack(path.resolve(tempDir, dalamudFileName), './data/XIVLauncher/addon/Hooks/dev', (err) => {
                         if (err) {
-                            return reject(err);
+                            reject(err);
+                            return;
                         }
-                        return resolve();
+                        resolve();
                     });
                 });
             })(),
         ]);
 
         // final clean up
-        fs.rm(tempDir, { recursive: true, force: true });
+        finals.push(fs.rm(tempDir, { recursive: true, force: true }));
 
         // Step 2: Cache GitHub API tree result
         console.log('Fetch skotlex/ffxiv-material-ui and sevii77/ffxiv_materialui_accent tree info');
@@ -119,8 +121,8 @@ const mainHandler = async () => {
         }
 
         // final writes
-        fs.writeFile(path.resolve('./tree/skotlex/ffxiv-material-ui', masterCommit), masterTree);
-        fs.writeFile(path.resolve('./tree/sevii77/ffxiv_materialui_accent', accentCommit), accentTree);
+        finals.push(fs.writeFile(path.resolve('./tree/skotlex/ffxiv-material-ui', masterCommit), masterTree));
+        finals.push(fs.writeFile(path.resolve('./tree/sevii77/ffxiv_materialui_accent', accentCommit), accentTree));
 
         // Step 3: Apply patch and build
         const patchText = await fs.readFile('./patch/Updater.cs');
@@ -140,7 +142,7 @@ const mainHandler = async () => {
                 const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj'], {
                     env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
                 });
-                if (res.error || res.status !== 0) {
+                if (res.error ?? res.status !== 0) {
                     console.error('.NET Build for plugin with ghproxy failed with status code %d', res.status);
                     console.error(res.error);
                     console.error(res.stdout.toString('utf-8'));
@@ -151,7 +153,7 @@ const mainHandler = async () => {
 
                 console.log('.NET Build for plugin with ghproxy completed');
 
-                fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release.zip');
+                finals.push(fs.cp('./plugin/bin/Release/MaterialUI/latest.zip', './release.zip'));
             })(),
             (async () => {
                 // plugin without ghproxy
@@ -165,7 +167,7 @@ const mainHandler = async () => {
                 const res = spawnSync('dotnet', ['build', './plugin_gh/MaterialUI.csproj'], {
                     env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
                 });
-                if (res.error || res.status !== 0) {
+                if (res.error ?? res.status !== 0) {
                     console.error('.NET Build for plugin without ghproxy failed with status code %d', res.status);
                     console.error(res.error);
                     console.error(res.stdout.toString('utf-8'));
@@ -176,7 +178,7 @@ const mainHandler = async () => {
 
                 console.log('.NET Build for plugin without ghproxy completed');
 
-                fs.cp('./plugin_gh/bin/Release/MaterialUI/latest.zip', './release_gh.zip');
+                finals.push(fs.cp('./plugin_gh/bin/Release/MaterialUI/latest.zip', './release_gh.zip'));
             })(),
         ]);
 
@@ -204,14 +206,14 @@ const mainHandler = async () => {
         manifest[0].LastUpdate = Math.floor(Date.now() / 1000);
 
         // final write
-        fs.writeFile('repo.json', JSON.stringify(manifest, undefined, 4));
+        finals.push(fs.writeFile('repo.json', JSON.stringify(manifest, undefined, 4)));
 
         manifest[0].DownloadLinkInstall = downloadLinkGH;
         manifest[0].DownloadLinkUpdate = downloadLinkGH;
         manifest[0].DownloadLinkTesting = downloadLinkGH;
 
         // final write
-        fs.writeFile('repo_gh.json', JSON.stringify(manifest, undefined, 4));
+        finals.push(fs.writeFile('repo_gh.json', JSON.stringify(manifest, undefined, 4)));
 
         buildInfo.masterCommit = masterCommit;
         buildInfo.accentCommit = accentCommit;
@@ -223,12 +225,14 @@ const mainHandler = async () => {
         // check GitHub action output
         if (process.env.GITHUB_OUTPUT) {
             // final write
-            fs.writeFile(process.env.GITHUB_OUTPUT, `updated=true\nmaster=${masterCommit}\naccent=${accentCommit}\nversion=${fullVersion}\n`, { flag: 'a' });
+            finals.push(fs.writeFile(process.env.GITHUB_OUTPUT, `updated=true\nmaster=${masterCommit}\naccent=${accentCommit}\nversion=${fullVersion}\n`, { flag: 'a' }));
         }
     }
 
     // final clean up
-    buildInfoFile.close();
+    finals.push(buildInfoFile.close());
+
+    await Promise.all(finals);
 };
 
 mainHandler().catch((error) => {

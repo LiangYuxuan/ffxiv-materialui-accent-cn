@@ -11,14 +11,15 @@ const getCommitDateBefore = async (
 ) => {
     const key = `${owner}/${repo}/${branch}/${beforeDate}`;
     if (commitCache.has(key)) {
+        // eslint-disable-next-line @typescript-eslint/non-nullable-type-assertion-style
         return commitCache.get(key) as string;
     }
 
-    const commits = await got.get(`https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}&until=${beforeDate}&per_page=1`, {
+    const commits: Commit[] = await got.get(`https://api.github.com/repos/${owner}/${repo}/commits?sha=${branch}&until=${beforeDate}&per_page=1`, {
         headers: {
             Authorization: process.env.GITHUB_TOKEN,
         },
-    }).json() as Commit[];
+    }).json();
     const { sha } = commits[0];
 
     commitCache.set(key, sha);
