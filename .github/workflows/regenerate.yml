@@ -33,7 +33,7 @@ jobs:
         with:
           dotnet-version: '7'
 
-      - run: node dist/app.js
+      - run: pnpm start
         id: fetch
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
