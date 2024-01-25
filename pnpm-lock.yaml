@@ -23,8 +23,8 @@ devDependencies:
     specifier: ^20.11.6
     version: 20.11.6
   '@types/tar':
-    specifier: ^6.1.10
-    version: 6.1.10
+    specifier: ^6.1.11
+    version: 6.1.11
   '@typescript-eslint/eslint-plugin':
     specifier: ^6.19.1
     version: 6.19.1(@typescript-eslint/parser@6.19.1)(eslint@8.56.0)(typescript@5.3.3)
@@ -219,8 +219,8 @@ packages:
     resolution: {integrity: sha512-G8hZ6XJiHnuhQKR7ZmysCeJWE08o8T0AXtk5darsCaTVsYZhhgUrq53jizaR2FvsoeCwJhlmwTjkXBY5Pn/ZHw==}
     dev: true
 
-  /@types/tar@6.1.10:
-    resolution: {integrity: sha512-60ZO+W0tRKJ3ggdzJKp75xKVlNogKYMqGvr2bMH/+k3T0BagfYTnbmVDFMJB1BFttz6yRgP5MDGP27eh7brrqw==}
+  /@types/tar@6.1.11:
+    resolution: {integrity: sha512-ThA1WD8aDdVU4VLuyq5NEqriwXErF5gEIJeyT6gHBWU7JtSmW2a5qjNv3/vR82O20mW+1vhmeZJfBQPT3HCugg==}
     dependencies:
       '@types/node': 20.11.6
       minipass: 4.0.3
