@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "7zip-min": "^1.4.4",
-    "got": "^14.1.0",
+    "got": "^14.2.0",
     "tar": "^6.2.0"
   },
   "devDependencies": {
