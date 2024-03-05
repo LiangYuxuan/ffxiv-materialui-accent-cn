@@ -178,7 +178,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
                     .replace('$ACCENTCOMMIT$', accentCommit),
             );
 
-            const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj'], {
+            const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj', '-c', 'Release'], {
                 env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
             });
             if (res.error ?? res.status !== 0) {
@@ -203,7 +203,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
                     .replace('$ACCENTCOMMIT$', accentCommit),
             );
 
-            const res = spawnSync('dotnet', ['build', './plugin_gh/MaterialUI.csproj'], {
+            const res = spawnSync('dotnet', ['build', './plugin_gh/MaterialUI.csproj', '-c', 'Release'], {
                 env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
             });
             if (res.error ?? res.status !== 0) {
