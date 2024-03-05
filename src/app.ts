@@ -1,11 +1,11 @@
 /* eslint-disable no-console */
 
-import assert from 'assert';
-import fs from 'fs/promises';
-import stream from 'stream/promises';
-import path from 'path';
-import os from 'os';
-import { spawnSync } from 'child_process';
+import assert from 'node:assert';
+import fs from 'node:fs/promises';
+import stream from 'node:stream/promises';
+import path from 'node:path';
+import os from 'node:os';
+import { spawnSync } from 'node:child_process';
 
 import got from 'got';
 import tar from 'tar';
