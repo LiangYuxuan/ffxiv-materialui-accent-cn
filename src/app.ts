@@ -29,6 +29,7 @@ const versions: VersionInfo[] = [
     {
         version: '6.5',
         global: new Date('2023-10-03T08:00:00Z'),
+        cn: new Date('2024-03-05T08:00:00Z'),
         patchFile: 'patch/Updater_1_4_10.cs',
     },
     {
