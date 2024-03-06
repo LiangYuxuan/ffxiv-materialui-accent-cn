@@ -4,6 +4,8 @@ using Newtonsoft.Json;
 using System;
 using System.Threading.Tasks;
 using System.IO;
+using Dalamud.Plugin.Services;
+using Dalamud.Logging;
 
 namespace MaterialUI {
 	public class MaterialUI : IDalamudPlugin {
@@ -13,12 +15,12 @@ namespace MaterialUI {
 		public string penumbraIssue {get; private set;} = null;
 		
 		public DalamudPluginInterface pluginInterface {get; private set;}
-		public CommandManager commandManager {get; private set;}
+		public ICommandManager commandManager {get; private set;}
 		public UI ui {get; private set;}
 		public Config config {get; private set;}
 		public Updater updater {get; private set;}
 		
-		public MaterialUI(DalamudPluginInterface pluginInterface, CommandManager commandManager) {
+		public MaterialUI(DalamudPluginInterface pluginInterface, ICommandManager commandManager) {
 			this.pluginInterface = pluginInterface;
 			this.commandManager = commandManager;
 			
@@ -54,23 +56,22 @@ namespace MaterialUI {
 		
 		public void CheckPenumbra() {
 			try {
-				pluginInterface.GetIpcSubscriber<int>("Penumbra.ApiVersion").InvokeFunc();
-				
+				pluginInterface.GetIpcSubscriber<(int, int)>("Penumbra.ApiVersions").InvokeFunc();
 			} catch(Exception e) {
+				PluginLog.Error("Penumbra.ApiVersions failed", e);
 				penumbraIssue = "Penumbra not found.";
 				
 				return;
 			}
 			
-			string penumbraConfigPath = $"{pluginInterface.ConfigFile.DirectoryName}/Penumbra.json";
-			if (!File.Exists(penumbraConfigPath)) {
-				penumbraIssue = "Can't find Penumbra Config.";
-				
-				return;
-			}
+			// string penumbraConfigPath = $"{pluginInterface.ConfigFile.DirectoryName}/Penumbra.json";
+			// if (!File.Exists(penumbraConfigPath)) {
+			// 	penumbraIssue = "Can't find Penumbra Config.";
+			// 	
+			// 	return;
+			// }
 			
-			dynamic penumbraData = JsonConvert.DeserializeObject(File.ReadAllText(penumbraConfigPath));
-			string penumbraPath = (string)penumbraData?.ModDirectory;
+			string penumbraPath = pluginInterface.GetIpcSubscriber<string>("Penumbra.GetModDirectory").InvokeFunc();
 			if(penumbraPath == "") {
 				penumbraIssue = "Penumbra Mod Directory has not been set.";
 				

@@ -9,7 +9,7 @@ using System.IO;
 using System.Numerics;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
-using ImGuiScene;
+using Dalamud.Interface.Internal;
 
 namespace MaterialUI {
 	public struct RepoFile {
@@ -86,49 +86,54 @@ namespace MaterialUI {
 		public OptionPenumbra[] penumbraOptions;
 	}
 
-	public class MetaGroupOption {
-		public string OptionName;
-		public string OptionDesc;
-		public Dictionary<string, string[]> OptionFiles;
+	public class PenumbraOption {
+		public string Name;
+		public string Description = "";
+		public Dictionary<string, string> Files;
+		public Dictionary<string, string> FileSwaps;
+		public List<object> Manipulations;
 
-		public MetaGroupOption(string name) {
-			OptionName = name;
-			OptionDesc = "";
-			OptionFiles = new Dictionary<string, string[]>();
+		public PenumbraOption(string name) {
+			Name = name;
+			Files = new();
+			FileSwaps = new();
+			Manipulations = new();
 		}
 	}
 
-	public class MetaGroup {
-		public string GroupName;
-		public string SelectionType;
-		public List<MetaGroupOption> Options;
+	public class PenumbraGroup {
+		public string Name;
+		public string Description = "";
+		public int Priority = 0;
+		public string Type = "Single";
+		public int DefaultSettings = 0;
+		public List<PenumbraOption> Options;
 
-		public MetaGroup(string name) {
-			GroupName = name;
-			SelectionType = "single";
-			Options = new List<MetaGroupOption>();
+		public PenumbraGroup(string name) {
+			Name = name;
+			Options = new();
 		}
 	}
 
-	public class Meta {
+	public class PenumbraMeta {
 		public int FileVersion;
 		public string Name;
 		public string Author;
 		public string Description;
 		public string Version;
 		public string Website;
-		public Dictionary<string, string> FileSwaps;
-		public Dictionary<string, MetaGroup> Groups;
+		// public Dictionary<string, string> FileSwaps;
+		// public Dictionary<string, MetaGroup> Groups;
 
-		public Meta() {
-			FileVersion = 0;
+		public PenumbraMeta() {
+			FileVersion = 3;
 			Name = "Material UI";
 			Author = "Sevii, skotlex";
 			Description = "";
 			Version = DateTime.Now.ToString("yyyy/MM/dd HH:mm");
 			Website = "https://github.com/Sevii77/ffxiv_materialui_accent";
-			FileSwaps = new Dictionary<string, string>();
-			Groups = new Dictionary<string, MetaGroup>();
+			// FileSwaps = new Dictionary<string, string>();
+			// Groups = new Dictionary<string, MetaGroup>();
 		}
 	}
 
@@ -137,9 +142,9 @@ namespace MaterialUI {
 		public string repo;
 		public Options options;
 		public Dir dir;
-		public TextureWrap preview;
+		public IDalamudTextureWrap preview;
 
-		public Mod(string id, string repo, Options options, Dir dir, TextureWrap preview) {
+		public Mod(string id, string repo, Options options, Dir dir, IDalamudTextureWrap preview) {
 			this.id = id;
 			this.repo = repo;
 			this.options = options;
@@ -152,7 +157,7 @@ namespace MaterialUI {
 		public const string repoMaster = "skotlex/ffxiv-material-ui";
         public const string repoMasterSHA = "1d81e7fa1b0f37cf74c58afb66ca469789e006f1";
 		public const string repoAccent = "sevii77/ffxiv_materialui_accent";
-        public const string repoAccentSHA = "7874dbfe0e174c91a19d0f10c3fd5e9225797177";
+        public const string repoAccentSHA = "e5fd7b52656761a4ecea21b556d09bf546344376";
 
 		private HttpClient httpClient;
 		private MaterialUI main;
@@ -489,10 +494,10 @@ namespace MaterialUI {
 					return;
 
 				if(optionsNew.Count > 0) {
-					changes.Insert(0, string.Format("Material UI has been updated\nPlease rediscover mods in Penumbra\n\nNew Options:\n{0}\n\nUpdated Files:\n", string.Join("\n\n", optionsNew)));
+					changes.Insert(0, string.Format("Material UI has been updated\n\nNew Options:\n{0}\n\nUpdated Files:\n", string.Join("\n\n", optionsNew)));
 					// main.ui.ShowNotice(string.Format("Material UI has been updated\nPlease rediscover mods in Penumbra\n\nNew Options:\n{0}\n\nUpdated Files:\n{1}", string.Join("\n\n", optionsNew), string.Join("\n", changes)));
 				} else {
-					changes.Insert(0, "Material UI has been updated\nPlease rediscover mods in Penumbra\n\nUpdated Files:\n");
+					changes.Insert(0, "Material UI has been updated\n\nUpdated Files:\n");
 					// main.ui.ShowNotice(string.Format("Material UI has been updated\nPlease rediscover mods in Penumbra\n\nUpdated Files:\n{0}", string.Join("\n", changes)));
 				}
 
@@ -558,9 +563,10 @@ namespace MaterialUI {
 			if(main.penumbraIssue != null)
 				return false;
 
-			string penumbraConfigPath = $"{main.pluginInterface.ConfigFile.DirectoryName}/Penumbra.json";
-			dynamic penumbraData = JsonConvert.DeserializeObject(File.ReadAllText(penumbraConfigPath));
-			string penumbraPath = (string)penumbraData?.ModDirectory;
+			// string penumbraConfigPath = $"{main.pluginInterface.ConfigFile.DirectoryName}/Penumbra.json";
+			// dynamic penumbraData = JsonConvert.DeserializeObject(File.ReadAllText(penumbraConfigPath));
+			// string penumbraPath = (string)penumbraData?.ModDirectory;
+			string penumbraPath = main.pluginInterface.GetIpcSubscriber<string>("Penumbra.GetModDirectory").InvokeFunc();
 
 			try {
 				Directory.Delete(Path.GetFullPath(penumbraPath + "/Material UI"), true);
@@ -579,8 +585,10 @@ namespace MaterialUI {
 								optionPaths.Add(gamePath);
 							}
 
-			Meta meta = new Meta();
+			PenumbraMeta meta = new PenumbraMeta();
 			meta.Description = "Open the configurator with /materialui\n\nCurrent colors:";
+			var groups = new Dictionary<string, PenumbraGroup>();
+			var default_mod = new PenumbraOption("");
 
 			Vector3 clr = main.config.color;
 			meta.Description += string.Format("\nAccent: R:{0} G:{1} B:{2}", (byte)(clr.X * 255), (byte)(clr.Y * 255), (byte)(clr.Z * 255));
@@ -606,12 +614,12 @@ namespace MaterialUI {
 				optionTextures[mod.id] = new();
 
 				foreach(OptionPenumbra option in mod.options.penumbraOptions) {
-					if(!meta.Groups.ContainsKey(option.name)) {
-						meta.Groups[option.name] = new MetaGroup(option.name);
+					if(!groups.ContainsKey(option.name)) {
+						groups[option.name] = new PenumbraGroup(option.name);
 
 						if(!baseoOptions.Contains(option.name)) {
 							baseoOptions.Add(option.name);
-							meta.Groups[option.name].Options.Add(new MetaGroupOption("Default"));
+							groups[option.name].Options.Add(new("Default"));
 
 							foreach(string[] textures in option.options.Values) {
 								string[] texts = new string[textures.Length];
@@ -626,15 +634,15 @@ namespace MaterialUI {
 
 					foreach(KeyValuePair<string, string[]> subOption in option.options) {
 						bool subExists = false;
-						foreach(MetaGroupOption metaSub in meta.Groups[option.name].Options)
-							if(metaSub.OptionName == subOption.Key) {
+						foreach(var metaSub in groups[option.name].Options)
+							if(metaSub.Name == subOption.Key) {
 								subExists = true;
 
 								break;
 							}
 
 						if(!subExists)
-							meta.Groups[option.name].Options.Add(new MetaGroupOption(subOption.Key));
+							groups[option.name].Options.Add(new(subOption.Key));
 
 						optionTextures[mod.id][(option.name, subOption.Key)] = subOption.Value;
 					}
@@ -673,8 +681,8 @@ namespace MaterialUI {
 								string subOptionName = optionTexture.Key.Item2;
 
 								int index = -1;
-								for(int i = 0; i < meta.Groups[optionName].Options.Count; i++)
-									if(meta.Groups[optionName].Options[i].OptionName == subOptionName) {
+								for(int i = 0; i < groups[optionName].Options.Count; i++)
+									if(groups[optionName].Options[i].Name == subOptionName) {
 										index = i;
 										break;
 									}
@@ -683,15 +691,19 @@ namespace MaterialUI {
 								if(File.Exists(path))
 									continue;
 
-								meta.Groups[optionName].Options[index].OptionFiles[(optionName + "/" + subOptionName + "/" + gamePath + "_hr1.tex").Replace("/", "\\")] = new string[1] {gamePath + "_hr1.tex"};
+								// groups[optionName].Options[index].Files[(optionName + "/" + subOptionName + "/" + gamePath + "_hr1.tex").Replace("/", "\\")] = new string[1] {gamePath + "_hr1.tex"};
+								groups[optionName].Options[index].Files[gamePath + "_hr1.tex"] = (optionName + "/" + subOptionName + "/" + gamePath + "_hr1.tex").Replace("/", "\\");
 
 								Directory.CreateDirectory(Path.GetDirectoryName(path));
 								tex.Save(path);
 							}
 				} else {
-					string path = Path.GetFullPath(penumbraPath + "/Material UI/" + gamePath + "_hr1.tex");
+					string path = Path.GetFullPath(penumbraPath + "/Material UI/" + gamePath.Replace("/", "\\") + "_hr1.tex");
 					if(File.Exists(path))
 						return;
+
+					// default_mod.Files[(gamePath + "_hr1.tex")] = new string[1] {gamePath.Replace("/", "\\") + "_hr1.tex"};
+					default_mod.Files[(gamePath + "_hr1.tex")] = gamePath.Replace("/", "\\") + "_hr1.tex";
 
 					Directory.CreateDirectory(Path.GetDirectoryName(path));
 					tex.Save(path);
@@ -789,7 +801,7 @@ namespace MaterialUI {
 						walkDirAccent(mod.dir.dirs["elements_" + main.config.style], null, mod.id);
 				walkDirAccent(dirAccent.dirs["elements_" + main.config.style], null, "base");
 
-				if(!main.config.accentOnly)
+				// if(!main.config.accentOnly)
 					walkDirMain(dirMaster.dirs["4K resolution"].dirs[char.ToUpper(main.config.style[0]) + main.config.style.Substring(1)].dirs["Saved"], null);
 			} catch(Exception e) {
 				PluginLog.LogError(e, "Failed writing textures");
@@ -799,6 +811,24 @@ namespace MaterialUI {
 			}
 
 			File.WriteAllText(Path.GetFullPath(penumbraPath + "/Material UI/meta.json"), JsonConvert.SerializeObject(meta, Formatting.Indented));
+
+			File.WriteAllText(Path.GetFullPath(penumbraPath + "/Material UI/default_mod.json"), JsonConvert.SerializeObject(default_mod, Formatting.Indented));
+
+			var priority = 0;
+			foreach(var (_, group) in groups) {
+				group.Priority = priority;
+				var name = group.Name.ToLowerInvariant();
+				foreach(var c in Path.GetInvalidFileNameChars())
+					name = name.Replace(c.ToString(), "");
+				priority += 1;
+				name = $"group_{(priority):000}_{name}.json";
+
+				File.WriteAllText(Path.GetFullPath(penumbraPath + "/Material UI/" + name), JsonConvert.SerializeObject(group, Formatting.Indented));
+			}
+
+			main.pluginInterface.GetIpcSubscriber<string, byte>("Penumbra.AddMod").InvokeFunc("Material UI");
+			main.pluginInterface.GetIpcSubscriber<string, string, byte>("Penumbra.ReloadMod").InvokeFunc("Material UI", "");
+
 			main.ui.CloseNotice();
 
 			GC.Collect();
