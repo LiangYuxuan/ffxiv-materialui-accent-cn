@@ -230,7 +230,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
     } else {
         buildInfo.accentRevision = 0;
     }
-    const fullVersion = `${version}.${buildInfo.accentRevision}`;
+    const fullVersion = `${version}.${buildInfo.accentRevision.toString()}`;
     const downloadLink = 'https://ghproxy.com/https://raw.githubusercontent.com/LiangYuxuan/ffxiv-materialui-accent-cn/master/release.zip';
     const downloadLinkGH = 'https://raw.githubusercontent.com/LiangYuxuan/ffxiv-materialui-accent-cn/master/release_gh.zip';
 
