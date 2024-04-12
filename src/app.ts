@@ -8,7 +8,7 @@ import os from 'node:os';
 import { spawnSync } from 'node:child_process';
 
 import got from 'got';
-import tar from 'tar';
+import { extract } from 'tar';
 import _7z from '7zip-min';
 
 import getCommitDateBefore from './api.js';
@@ -91,7 +91,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
             await archiveFile.close();
 
             await fs.rm('./plugin', { recursive: true, force: true });
-            await tar.extract({
+            await extract({
                 file: path.resolve(tempDir, archiveFileName),
                 cwd: tempDir,
                 strip: 1,
