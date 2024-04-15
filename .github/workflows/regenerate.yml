@@ -43,4 +43,7 @@ jobs:
         with:
           author_name: GitHub Action
           author_email: github-actions[bot]@users.noreply.github.com
-          message: Update Plugin to Version ${{ steps.fetch.outputs.version }} with Commit skotlex/ffxiv-material-ui@${{ steps.fetch.outputs.master }} & sevii77/ffxiv_materialui_accent@${{ steps.fetch.outputs.accent }}
+          message: |
+            chore: update plugin to version ${{ steps.fetch.outputs.version }}
+
+            skotlex/ffxiv-material-ui@${{ steps.fetch.outputs.master }} & sevii77/ffxiv_materialui_accent@${{ steps.fetch.outputs.accent }}
