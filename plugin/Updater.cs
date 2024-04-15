@@ -157,7 +157,7 @@ namespace MaterialUI {
 		public const string repoMaster = "skotlex/ffxiv-material-ui";
         public const string repoMasterSHA = "1d81e7fa1b0f37cf74c58afb66ca469789e006f1";
 		public const string repoAccent = "sevii77/ffxiv_materialui_accent";
-        public const string repoAccentSHA = "e5fd7b52656761a4ecea21b556d09bf546344376";
+        public const string repoAccentSHA = "7eb868632ae8982459f5618021a52fca639b6974";
 
 		private HttpClient httpClient;
 		private MaterialUI main;
