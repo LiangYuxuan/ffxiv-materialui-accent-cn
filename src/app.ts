@@ -118,13 +118,13 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
             await dalamudFile.close();
 
             try {
-                await fs.stat('./data/XIVLauncher/addon/Hooks/dev');
+                await fs.stat('./dalamud');
             } catch {
-                await fs.mkdir('./data/XIVLauncher/addon/Hooks/dev', { recursive: true });
+                await fs.mkdir('./dalamud', { recursive: true });
             }
 
             await new Promise<void>((resolve, reject) => {
-                _7z.unpack(path.resolve(tempDir, dalamudFileName), './data/XIVLauncher/addon/Hooks/dev', (err) => {
+                _7z.unpack(path.resolve(tempDir, dalamudFileName), './dalamud', (err) => {
                     if (err) {
                         reject(err);
                         return;
@@ -191,7 +191,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
             );
 
             const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj', '-c', 'Release'], {
-                env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
+                env: { ...process.env, GITHUB_TOKEN: undefined, DALAMUD_HOME: path.resolve('./dalamud') },
             });
             if (res.error ?? res.status !== 0) {
                 console.error('.NET Build for plugin with ghproxy failed with status code %d', res.status);
@@ -216,7 +216,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
             );
 
             const res = spawnSync('dotnet', ['build', './plugin_gh/MaterialUI.csproj', '-c', 'Release'], {
-                env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
+                env: { ...process.env, GITHUB_TOKEN: undefined, DALAMUD_HOME: path.resolve('./dalamud') },
             });
             if (res.error ?? res.status !== 0) {
                 console.error('.NET Build for plugin without ghproxy failed with status code %d', res.status);
