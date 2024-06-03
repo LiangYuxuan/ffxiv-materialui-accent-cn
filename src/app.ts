@@ -97,6 +97,7 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
             await archiveFile.close();
 
             await fs.rm('./plugin', { recursive: true, force: true });
+            await fs.rm('./plugin_gh', { recursive: true, force: true });
             await extract({
                 file: path.resolve(tempDir, archiveFileName),
                 cwd: tempDir,
