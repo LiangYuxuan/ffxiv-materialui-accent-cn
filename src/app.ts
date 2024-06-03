@@ -171,11 +171,6 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
     // Step 3: Apply patch and build
     const patchText = await fs.readFile(versions[versionCNIndex].patchFile);
 
-    // XXX: patch .csproj for .NET 8.0
-    const projectConfigText = (await fs.readFile('./plugin/MaterialUI.csproj'))
-        .toString('utf-8')
-        .replace('<TargetFramework>net7.0-windows</TargetFramework>', '<TargetFramework>net8.0-windows</TargetFramework>');
-
     await Promise.all([
         (async () => {
             // plugin with ghproxy
@@ -187,9 +182,6 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
                     .replace('$MASTERCOMMIT$', masterCommit)
                     .replace('$ACCENTCOMMIT$', accentCommit),
             );
-
-            // XXX: patch .csproj for .NET 8.0
-            await fs.writeFile('./plugin/MaterialUI.csproj', projectConfigText);
 
             const res = spawnSync('dotnet', ['build', './plugin/MaterialUI.csproj', '-c', 'Release'], {
                 env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
@@ -215,9 +207,6 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
                     .replace('$MASTERCOMMIT$', masterCommit)
                     .replace('$ACCENTCOMMIT$', accentCommit),
             );
-
-            // XXX: patch .csproj for .NET 8.0
-            await fs.writeFile('./plugin_gh/MaterialUI.csproj', projectConfigText);
 
             const res = spawnSync('dotnet', ['build', './plugin_gh/MaterialUI.csproj', '-c', 'Release'], {
                 env: { ...process.env, GITHUB_TOKEN: undefined, AppData: path.resolve('./data') },
