@@ -6,6 +6,7 @@ import stream from 'node:stream/promises';
 import path from 'node:path';
 import os from 'node:os';
 import { spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
 
 import got from 'got';
 import { extract } from 'tar';
@@ -20,7 +21,6 @@ interface VersionInfo {
     version: string,
     global: Date,
     cn?: Date,
-    patchFile: string,
 }
 
 // https://ffxiv.fandom.com/wiki/Patch_notes
@@ -29,27 +29,28 @@ const versions: VersionInfo[] = [
     {
         version: '7.0',
         global: new Date('2024-06-28T08:00:00Z'),
-        patchFile: 'patch/Updater_1_4_12.cs',
     },
     {
         version: '6.5',
         global: new Date('2023-10-03T08:00:00Z'),
         cn: new Date('2024-03-05T08:00:00Z'),
-        patchFile: 'patch/Updater_1_4_12.cs',
     },
     {
         version: '6.4',
         global: new Date('2023-05-23T08:00:00Z'),
         cn: new Date('2023-09-19T08:00:00Z'),
-        patchFile: 'patch/Updater_1_4_8.cs',
     },
     {
         version: '6.3',
         global: new Date('2023-01-10T08:00:00Z'),
         cn: new Date('2023-05-09T08:00:00Z'),
-        patchFile: 'patch/Updater_1_4_8.cs',
     },
 ];
+
+const patchUpdaterMap = new Map<string, string>([
+    ['7285096079bbc65e0fc1f01165c56afe3f39d996871b47f41e6a87db8d62ceb5', 'Updater_1_4_12.cs'],
+    ['a53cd0bd4a98f7d5b9f89b2486ad0fe5e28c69818cd92e3f7b67eaafdd7c098c', 'Updater_1_4_13.cs'],
+]);
 
 const today = new Date();
 const versionCNIndex = versions
@@ -169,7 +170,12 @@ if (buildInfo.masterCommit !== masterCommit || buildInfo.accentCommit !== accent
     finals.push(fs.writeFile(path.resolve('./tree/sevii77/ffxiv_materialui_accent', accentCommit), accentTree));
 
     // Step 3: Apply patch and build
-    const patchText = await fs.readFile(versions[versionCNIndex].patchFile);
+    const updaterBuffer = await fs.readFile('./plugin/Updater.cs');
+    const updaterHash = crypto.createHash('sha256').update(updaterBuffer).digest('hex');
+    const patchFileName = patchUpdaterMap.get(updaterHash);
+    assert(patchFileName, `Failed to find patch file for Updater.cs hash ${updaterHash}`);
+
+    const patchText = await fs.readFile(`./patch/${patchFileName}`);
 
     await Promise.all([
         (async () => {
