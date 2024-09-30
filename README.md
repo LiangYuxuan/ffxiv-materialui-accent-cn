@@ -5,11 +5,11 @@ Build Dalamud plugin Material UI for CN client.
 > [!IMPORTANT]
 > [Dalamud plugin Material UI](https://github.com/Sevii77/ffxiv_materialui_accent/) has been [deprecated](https://github.com/Sevii77/ffxiv_materialui_accent/issues/105#issuecomment-2206917051).
 >
-> New replacement plugin [aetherment](https://github.com/Sevii77/aetherment) can be found at [LiangYuxuan/dalamud-plugin-cn-fetcher](https://github.com/LiangYuxuan/dalamud-plugin-cn-fetcher).
+> New replacement plugin [aetherment](https://github.com/Sevii77/aetherment) for CN client can be found at [LiangYuxuan/dalamud-plugin-cn-fetcher](https://github.com/LiangYuxuan/dalamud-plugin-cn-fetcher).
 >
-> [卫月插件 Material UI](https://github.com/Sevii77/ffxiv_materialui_accent/)已被[弃用](https://github.com/Sevii77/ffxiv_materialui_accent/issues/105#issuecomment-2206917051).
+> [卫月插件 Material UI](https://github.com/Sevii77/ffxiv_materialui_accent/)已被[弃用](https://github.com/Sevii77/ffxiv_materialui_accent/issues/105#issuecomment-2206917051)。
 >
-> 新的替代插件[aetherment](https://github.com/Sevii77/aetherment)可在[LiangYuxuan/dalamud-plugin-cn-fetcher](https://github.com/LiangYuxuan/dalamud-plugin-cn-fetcher)获取.
+> 新的替代插件[aetherment](https://github.com/Sevii77/aetherment)的国服版本可在[LiangYuxuan/dalamud-plugin-cn-fetcher](https://github.com/LiangYuxuan/dalamud-plugin-cn-fetcher)获取。
 
 ---
 
